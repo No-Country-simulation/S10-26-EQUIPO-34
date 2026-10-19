@@ -1,0 +1,28 @@
+{
+  "name": "repusense",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RepuSense - Radar de Reputación en Crisis (B2B SaaS)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f postgres",
+    "build": "npm run --workspaces --if-present build",
+    "test": "npm run --workspaces --if-present test",
+    "lint": "npm run --workspaces --if-present lint"
+  },
+  "keywords": [
+    "b2b",
+    "reputation",
+    "lead-generation",
+    "scraping",
+    "ai",
+    "gemini"
+  ],
+  "author": "RepuSense Team",
+  "license": "UNLICENSED"
+}
