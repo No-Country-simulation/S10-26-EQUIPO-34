@@ -1,0 +1,136 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum LeadSource {
+  GOOGLE_MAPS
+  YELP
+  TRIPADVISOR
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  IN_CONVERSATION
+  DISQUALIFIED
+  CONVERTED
+}
+
+enum CrisisCategory {
+  MALA_ATENCION
+  TIEMPOS_ESPERA
+  HIGIENE_CALIDAD
+  PRECIOS_COBROS
+  COMUNICACION_SEGUIMIENTO
+  OTRO
+}
+
+enum CrisisSeverity {
+  ALTA
+  MEDIA
+  BAJA
+}
+
+enum ScrapingJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Lead {
+  id          String      @id @default(uuid())
+  externalId  String      @unique
+  name        String
+  category    String
+  city        String
+  address     String?
+  rating      Float
+  reviewCount Int
+  phone       String?
+  website     String?
+  source      LeadSource  @default(GOOGLE_MAPS)
+  sourceUrl   String
+  status      LeadStatus  @default(NEW)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  contacts    ContactDetail[]
+  reviews     Review[]
+  enrichment  Enrichment?
+
+  @@index([city, category])
+  @@index([rating])
+  @@index([status])
+  @@map("leads")
+}
+
+model ContactDetail {
+  id           String   @id @default(uuid())
+  leadId       String
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  email        String?
+  phone        String?
+  linkedinUrl  String?
+  instagramUrl String?
+  facebookUrl  String?
+  whatsappUrl  String?
+  source       String   @default("WEBSITE_CRAWL")
+  verified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([leadId])
+  @@map("contact_details")
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  leadId     String
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  author     String?
+  rating     Float
+  text       String
+  reviewDate String?
+  createdAt  DateTime @default(now())
+
+  @@index([leadId])
+  @@map("reviews")
+}
+
+model Enrichment {
+  id               String         @id @default(uuid())
+  leadId           String         @unique
+  lead             Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  primaryIssue     String
+  category         CrisisCategory @default(OTRO)
+  summaryReason    String
+  severity         CrisisSeverity @default(MEDIA)
+  emailSubject     String
+  emailOpeningHook String
+  emailBodyDraft   String?
+  generatedAt      DateTime       @default(now())
+
+  @@map("enrichments")
+}
+
+model ScrapingJob {
+  id           String            @id @default(uuid())
+  city         String
+  industry     String
+  source       LeadSource        @default(GOOGLE_MAPS)
+  status       ScrapingJobStatus @default(PENDING)
+  leadsFound   Int               @default(0)
+  leadsAdded   Int               @default(0)
+  errorMessage String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime          @default(now())
+
+  @@index([status])
+  @@map("scraping_jobs")
+}
